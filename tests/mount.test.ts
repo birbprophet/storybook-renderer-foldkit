@@ -47,6 +47,6 @@ test("foldkitStories produces CSF-shaped stories", () => {
   expect(stories.default.title).toBe("Example/Counter");
   expect(stories.default.tags).toContain("foldkit");
   const canvas = { canvasElement: document.createElement("div") };
-  expect(() => story.render(canvas)).not.toThrow();
+  expect(() => story.render({}, canvas)).not.toThrow();
   expect(canvas.canvasElement.children.length).toBe(1);
 });

@@ -13,9 +13,13 @@ export interface FoldkitMeta<Model, Message> {
 }
 
 export interface FoldkitStory {
-  /** Storybook's canvas; the adapter mounts into it fresh per render. */
-  render: (canvas: { canvasElement: HTMLElement }) => void;
-};
+  /** Storybook invokes render(args, context); we mount into
+   * context.canvasElement and return void. */
+  render: (
+    args: Record<string, never>,
+    context: { canvasElement: HTMLElement },
+  ) => void;
+}
 
 export function foldkitStories<Model, Message>(
   meta: FoldkitMeta<Model, Message>,
@@ -30,7 +34,15 @@ export function foldkitStories<Model, Message>(
     default: { title: meta.title, tags: ["foldkit"] },
     story: (name: string, model: Model) => ({
       name,
-      render: ({ canvasElement }: { canvasElement: HTMLElement }) => {
+      // Storybook invokes render(args, context); the html framework clears
+      // the canvas itself, so mount into context.canvasElement and return
+      // void — never a node (returning one makes the framework append a
+      // second copy).
+      render: (
+        _args: Record<string, never>,
+        context: { canvasElement: HTMLElement },
+      ): void => {
+        const canvasElement = context.canvasElement;
         canvasElement.replaceChildren();
         mountFoldkitStory({
           program: meta.program,
