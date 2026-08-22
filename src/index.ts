@@ -5,11 +5,11 @@ import type { Layer } from "effect";
 
 import { mountFoldkitStory, type FoldkitProgram } from "./mount.ts";
 
-export interface FoldkitMeta<Model, Message> {
+export interface FoldkitMeta<Model, Message, R = never> {
   readonly title: string;
-  readonly program: FoldkitProgram<Model, Message>;
+  readonly program: FoldkitProgram<Model, Message, R>;
   /** Optional resources layer shared by every story in the file. */
-  readonly resources?: Layer.Layer<never>;
+  readonly resources?: Layer.Layer<R, never>;
 }
 
 export interface FoldkitStory {
@@ -21,8 +21,8 @@ export interface FoldkitStory {
   ) => void;
 }
 
-export function foldkitStories<Model, Message>(
-  meta: FoldkitMeta<Model, Message>,
+export function foldkitStories<Model, Message, R = never>(
+  meta: FoldkitMeta<Model, Message, R>,
 ): {
   readonly default: {
     readonly title: string;
@@ -44,10 +44,10 @@ export function foldkitStories<Model, Message>(
       ): void => {
         const canvasElement = context.canvasElement;
         canvasElement.replaceChildren();
-        mountFoldkitStory({
+        mountFoldkitStory<Model, Message, R>({
           program: meta.program,
           model,
-          ...(meta.resources ? { resources: meta.resources } : {}),
+          resources: meta.resources,
           container: canvasElement,
         });
       },

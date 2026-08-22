@@ -21,22 +21,23 @@ import { Runtime } from "foldkit";
 /** The program surface a consumer re-exports from their app barrel
  * (`main.ts` per ADR-style layouts): everything except init/subscriptions,
  * because stories boot from fixture Models, never from init side effects. */
-export interface FoldkitProgram<Model, Message> {
+export interface FoldkitProgram<Model, Message, R = never> {
   readonly Model: Schema.Codec<Model, any, unknown, unknown>;
   readonly update: (
     model: Model,
     message: Message,
-  ) => readonly [Model, ReadonlyArray<Command<Message>>];
+  ) => readonly [Model, ReadonlyArray<Command<Message, never, R>>];
   /** Root view. May return the full Document; only `.body` is mounted. */
   readonly view: (model: Model, h: HtmlBuilder<Message>) => { body: unknown };
 }
 
-export interface MountOptions<Model, Message> {
-  readonly program: FoldkitProgram<Model, Message>;
+export interface MountOptions<Model, Message, R = never> {
+  readonly program: FoldkitProgram<Model, Message, R>;
   /** The fixture Model this story renders. */
   readonly model: Model;
-  /** Optional resources layer (e.g. a fixture ApiClient layer). */
-  readonly resources?: Layer.Layer<never>;
+  /** Layer providing exactly the R channel the program's commands require
+   * (e.g. a fixture ApiClient layer). */
+  readonly resources?: Layer.Layer<R, never>;
   /** Element hosting the story; the mount lands inside a child wrapper. */
   readonly container: HTMLElement;
 }
@@ -50,8 +51,8 @@ export interface MountedStory {
 
 let mountSeq = 0;
 
-export function mountFoldkitStory<Model, Message>(
-  options: MountOptions<Model, Message>,
+export function mountFoldkitStory<Model, Message, R = never>(
+  options: MountOptions<Model, Message, R>,
 ): MountedStory {
   const document = options.container.ownerDocument;
 
