@@ -1,0 +1,27 @@
+{
+  "name": "storybook-renderer-foldkit",
+  "version": "0.1.0",
+  "description": "A Storybook renderer for Foldkit views: mounts the real Runtime element per story, static named-fixture stories first.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./mount": "./src/mount.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "effect": "4.0.0-rc.110",
+    "foldkit": "0.148.2"
+  },
+  "devDependencies": {
+    "@foldkit/vite-plugin": "0.16.1",
+    "@happy-dom/global-registrator": "^20.11.6",
+    "@storybook/html": "10.5.10",
+    "happy-dom": "^20.10.4",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.9"
+  }
+}
