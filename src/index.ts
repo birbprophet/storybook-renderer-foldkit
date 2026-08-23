@@ -16,7 +16,7 @@ export interface StoryContext {
 export interface FoldkitStory<Args> {
   readonly args?: Partial<Args>;
   readonly name?: string;
-  render(args: Args, context: StoryContext): void;
+  render(args: Args, context: StoryContext): HTMLElement;
 }
 
 export interface FoldkitStoryDefinition<Args, Model, Message, R = never>
@@ -33,7 +33,7 @@ export function createFoldkitStory<Args, Model, Message, R = never>(
   definition: FoldkitStoryDefinition<Args, Model, Message, R>,
 ): FoldkitStory<Args> {
   return {
-    render(args, context): void {
+    render(args, context): HTMLElement {
       const decoded = Schema.decodeUnknownSync(definition.Args)(args);
       mountedCanvases.get(context.canvasElement)?.destroy();
       context.canvasElement.replaceChildren();
@@ -47,6 +47,7 @@ export function createFoldkitStory<Args, Model, Message, R = never>(
         resources: definition.resources,
       });
       mountedCanvases.set(context.canvasElement, mounted);
+      return mounted.host;
     },
   };
 }

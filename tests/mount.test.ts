@@ -45,7 +45,14 @@ const render = (story: ReturnType<typeof liveStory>, args: Args, id = "example--
 
 describe("live stories", () => {
   test("decode args and render the initial model", async () => {
-    const canvas = render(liveStory(), { count: 7, label: "Count" });
+    const story = liveStory();
+    const canvasElement = document.createElement("div");
+    const returned = story.render(
+      { count: 7, label: "Count" },
+      { canvasElement, id: "example--live" },
+    );
+    expect(returned).toBe(canvasElement.firstElementChild);
+    const canvas = canvasElement;
     await vi.waitFor(() => expect(canvas.textContent).toBe("Count: 7"));
   });
 
