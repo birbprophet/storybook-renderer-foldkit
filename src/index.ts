@@ -1,59 +1,88 @@
-// CSF glue: turns a program + named fixture Models into Storybook story
-// objects whose `render` mounts through mountFoldkitStory. v0 is
-// static-stories-only by design — see README Limits.
 import type { Layer } from "effect";
+import * as Schema from "effect/Schema";
 
-import { mountFoldkitStory, type FoldkitProgram } from "./mount.ts";
+import {
+  mountFoldkitStory,
+  type FoldkitProgram,
+  type InitialState,
+  type MountedStory,
+} from "./mount.ts";
+
+export interface StoryContext {
+  readonly canvasElement: HTMLElement;
+  readonly id: string;
+}
+
+export interface FoldkitStory<Args> {
+  readonly args?: Partial<Args>;
+  readonly name?: string;
+  render(args: Args, context: StoryContext): void;
+}
+
+export interface FoldkitStoryDefinition<Args, Model, Message, R = never>
+  extends FoldkitProgram<Model, Message, R> {
+  readonly Args: Schema.Codec<Args, unknown, never>;
+  readonly init: (args: Args) => InitialState<Model, Message, R>;
+  readonly resources?: Layer.Layer<R, never>;
+  readonly onCrash?: (error: unknown) => void;
+}
+
+const mountedCanvases = new WeakMap<HTMLElement, MountedStory>();
+
+export function createFoldkitStory<Args, Model, Message, R = never>(
+  definition: FoldkitStoryDefinition<Args, Model, Message, R>,
+): FoldkitStory<Args> {
+  return {
+    render(args, context): void {
+      const decoded = Schema.decodeUnknownSync(definition.Args)(args);
+      mountedCanvases.get(context.canvasElement)?.destroy();
+      context.canvasElement.replaceChildren();
+
+      const mounted = mountFoldkitStory({
+        container: context.canvasElement,
+        id: context.id,
+        initial: definition.init(decoded),
+        onCrash: definition.onCrash,
+        program: definition,
+        resources: definition.resources,
+      });
+      mountedCanvases.set(context.canvasElement, mounted);
+    },
+  };
+}
 
 export interface FoldkitMeta<Model, Message, R = never> {
   readonly title: string;
   readonly program: FoldkitProgram<Model, Message, R>;
-  /** Optional resources layer shared by every story in the file. */
   readonly resources?: Layer.Layer<R, never>;
 }
 
-export interface FoldkitStory {
-  /** Storybook invokes render(args, context); we mount into
-   * context.canvasElement and return void. */
-  render: (
-    args: Record<string, never>,
-    context: { canvasElement: HTMLElement },
-  ) => void;
-}
+const NoArgs = Schema.Struct({});
 
 export function foldkitStories<Model, Message, R = never>(
   meta: FoldkitMeta<Model, Message, R>,
 ): {
-  readonly default: {
-    readonly title: string;
-    readonly tags: readonly string[];
-  };
-  readonly story: (name: string, model: Model) => FoldkitStory;
+  readonly default: { readonly title: string; readonly tags: readonly string[] };
+  readonly story: (name: string, model: Model) => FoldkitStory<Record<string, never>>;
 } {
   return {
     default: { title: meta.title, tags: ["foldkit"] },
-    story: (name: string, model: Model) => ({
+    story: (name, model) => ({
+      ...createFoldkitStory({
+        ...meta.program,
+        Args: NoArgs,
+        init: () => [model, []],
+        resources: meta.resources,
+      }),
       name,
-      // Storybook invokes render(args, context); the html framework clears
-      // the canvas itself, so mount into context.canvasElement and return
-      // void — never a node (returning one makes the framework append a
-      // second copy).
-      render: (
-        _args: Record<string, never>,
-        context: { canvasElement: HTMLElement },
-      ): void => {
-        const canvasElement = context.canvasElement;
-        canvasElement.replaceChildren();
-        mountFoldkitStory<Model, Message, R>({
-          program: meta.program,
-          model,
-          resources: meta.resources,
-          container: canvasElement,
-        });
-      },
     }),
   };
 }
 
 export { mountFoldkitStory } from "./mount.ts";
-export type { FoldkitProgram, MountOptions, MountedStory } from "./mount.ts";
+export type {
+  FoldkitProgram,
+  InitialState,
+  MountOptions,
+  MountedStory,
+} from "./mount.ts";

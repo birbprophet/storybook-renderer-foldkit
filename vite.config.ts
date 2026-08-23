@@ -1,3 +1,4 @@
+import { foldkit } from "@foldkit/vite-plugin";
 import { defineConfig } from "vitest/config";
 
 // Single happy-dom tier for now. Vitest BROWSER mode (real Chromium) is
@@ -10,6 +11,7 @@ import { defineConfig } from "vitest/config";
 // here; rendering certification happens in real Chromium at the platform's
 // visual-runner phase (ADR-0021 §4), which pins its own browser build.
 export default defineConfig({
+  plugins: [foldkit()],
   test: {
     environment: "happy-dom",
     include: ["tests/*.test.ts"],
