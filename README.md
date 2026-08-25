@@ -56,6 +56,25 @@ Each canvas uses the Storybook context ID for its mount seat. A remount or story
 change disposes the previous FoldKit runtime before replacing it. The existing
 `foldkitStories` named-fixture API remains as a compatibility wrapper.
 
+FoldKit commits its first view asynchronously. Interaction stories must wait
+for that commit before querying the canvas:
+
+```ts
+import { waitForFoldkitStory } from "storybook-renderer-foldkit";
+
+export const Interactions = {
+  ...Live,
+  play: async ({ canvasElement }) => {
+    await waitForFoldkitStory(canvasElement);
+    // Query and operate the mounted FoldKit view here.
+  },
+};
+```
+
+The wait rejects when the runtime crashes and accepts an optional `AbortSignal`.
+Controls changes also destroy an unmounted pending host, so a late attachment
+cannot start a stale runtime.
+
 In Storybook's `viteFinal`:
 
 ```ts

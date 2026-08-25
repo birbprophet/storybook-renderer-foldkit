@@ -7,6 +7,7 @@ import {
   createFoldkitStory,
   foldkitStories,
   mountFoldkitStory,
+  waitForFoldkitStory,
 } from "../src/index.ts";
 
 const Model = S.Struct({ count: S.Number, label: S.String });
@@ -108,6 +109,7 @@ describe("live stories", () => {
         ),
       canvas,
     );
+    await waitForFoldkitStory(canvas);
     await vi.waitFor(() => expect(canvas.textContent).toBe("After: 9"));
     expect(firstHost?.isConnected).toBe(false);
     expect(canvas.children).toHaveLength(1);
@@ -124,9 +126,10 @@ describe("live stories", () => {
     expect(canvasElement.children).toHaveLength(0);
   });
 
-  test("mount simultaneous canvases with context-derived identities", () => {
+  test("mount simultaneous canvases with context-derived identities", async () => {
     const first = render(liveStory(), { count: 1, label: "First" }, "example--first");
     const second = render(liveStory(), { count: 2, label: "Second" }, "example--second");
+    await Promise.all([waitForFoldkitStory(first), waitForFoldkitStory(second)]);
     expect(first.firstElementChild?.getAttribute("data-foldkit-story-id")).toBe(
       "example--first",
     );
@@ -135,7 +138,7 @@ describe("live stories", () => {
     );
   });
 
-  test("waits for Storybook to attach the returned host before starting FoldKit", async () => {
+  test("mounts the original returned host when Storybook attaches it after the first microtask", async () => {
     const story = liveStory();
     const canvasElement = document.createElement("div");
     const host = story.render(
@@ -145,15 +148,55 @@ describe("live stories", () => {
     await Promise.resolve();
     expect(host.textContent).toBe("");
 
-    renderThroughStorybookHtml(
-      () =>
-        story.render(
-          { count: 4, label: "Attached" },
-          { canvasElement, id: "example--detached" },
-        ),
-      canvasElement,
+    canvasElement.appendChild(host);
+    await vi.waitFor(() => expect(host.textContent).toBe("Detached: 4"));
+    await vi.waitFor(() => expect(host.dataset.foldkitState).toBe("ready"));
+    await waitForFoldkitStory(canvasElement);
+    expect(canvasElement.textContent).toBe("Detached: 4");
+  });
+
+  test("destroy a pending attachment when Controls replace its story", async () => {
+    const story = liveStory();
+    const canvasElement = document.createElement("div");
+    const abandoned = story.render(
+      { count: 1, label: "Abandoned" },
+      { canvasElement, id: "example--pending" },
     );
-    await vi.waitFor(() => expect(canvasElement.textContent).toBe("Attached: 4"));
+    await Promise.resolve();
+
+    const replacement = story.render(
+      { count: 2, label: "Replacement" },
+      { canvasElement, id: "example--pending" },
+    );
+    canvasElement.appendChild(abandoned);
+    await Promise.resolve();
+    expect(abandoned.textContent).toBe("");
+
+    canvasElement.replaceChildren(replacement);
+    await waitForFoldkitStory(canvasElement);
+    expect(canvasElement.textContent).toBe("Replacement: 2");
+  });
+
+  test("reject readiness when the first FoldKit view crashes", async () => {
+    const crashingStory = createFoldkitStory<Args, Model, Message>({
+      ...programImpl,
+      Args,
+      init: (args) => [args, []],
+      onCrash: () => undefined,
+      view: () => {
+        throw new Error("broken first view");
+      },
+    });
+    const canvasElement = document.createElement("div");
+    const host = crashingStory.render(
+      { count: 1, label: "Crash" },
+      { canvasElement, id: "example--crash-ready" },
+    );
+    canvasElement.appendChild(host);
+
+    await expect(waitForFoldkitStory(canvasElement)).rejects.toThrow(
+      "FoldKit story example--crash-ready crashed",
+    );
   });
 });
 

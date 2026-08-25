@@ -27,7 +27,55 @@ export interface FoldkitStoryDefinition<Args, Model, Message, R = never>
   readonly onCrash?: (error: unknown) => void;
 }
 
-const mountedCanvases = new WeakMap<HTMLElement, MountedStory>();
+interface StoryLifecycle {
+  destroy(): void;
+}
+
+const mountedCanvases = new WeakMap<HTMLElement, StoryLifecycle>();
+
+export interface WaitForFoldkitStoryOptions {
+  readonly signal?: AbortSignal;
+}
+
+export function waitForFoldkitStory(
+  canvasElement: HTMLElement,
+  options: WaitForFoldkitStoryOptions = {},
+): Promise<HTMLElement> {
+  return new Promise((resolve, reject) => {
+    let observer: MutationObserver | undefined;
+    const cleanup = () => {
+      observer?.disconnect();
+      options.signal?.removeEventListener("abort", onAbort);
+    };
+    const onAbort = () => {
+      cleanup();
+      reject(options.signal?.reason ?? new DOMException("FoldKit story wait aborted", "AbortError"));
+    };
+    const inspect = () => {
+      const host = canvasElement.querySelector<HTMLElement>("[data-foldkit-story-id]");
+      if (host?.dataset.foldkitState === "ready") {
+        cleanup();
+        resolve(host);
+      } else if (host?.dataset.foldkitState === "crashed") {
+        cleanup();
+        reject(new Error(`FoldKit story ${host.dataset.foldkitStoryId ?? "unknown"} crashed`));
+      }
+    };
+
+    if (options.signal?.aborted === true) {
+      onAbort();
+      return;
+    }
+    observer = new MutationObserver(inspect);
+    observer.observe(canvasElement, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+    options.signal?.addEventListener("abort", onAbort, { once: true });
+    inspect();
+  });
+}
 
 export function createFoldkitStory<Args, Model, Message, R = never>(
   definition: FoldkitStoryDefinition<Args, Model, Message, R>,
@@ -40,11 +88,15 @@ export function createFoldkitStory<Args, Model, Message, R = never>(
 
       const host = context.canvasElement.ownerDocument.createElement("div");
       host.dataset.foldkitStoryId = context.id;
-      queueMicrotask(() => {
-        if (host.parentElement !== context.canvasElement) {
+      host.dataset.foldkitState = "mounting";
+      let destroyed = false;
+      let mounted: MountedStory | undefined;
+      const mountWhenAttached = () => {
+        if (destroyed || mounted !== undefined || host.parentElement !== context.canvasElement) {
           return;
         }
-        const mounted = mountFoldkitStory({
+        attachmentObserver.disconnect();
+        mounted = mountFoldkitStory({
           container: context.canvasElement,
           host,
           id: context.id,
@@ -53,8 +105,20 @@ export function createFoldkitStory<Args, Model, Message, R = never>(
           program: definition,
           resources: definition.resources,
         });
-        mountedCanvases.set(context.canvasElement, mounted);
-      });
+      };
+      const attachmentObserver = new MutationObserver(mountWhenAttached);
+      attachmentObserver.observe(context.canvasElement, { childList: true });
+      const lifecycle: StoryLifecycle = {
+        destroy() {
+          if (destroyed) return;
+          destroyed = true;
+          attachmentObserver.disconnect();
+          mounted?.destroy();
+          host.remove();
+        },
+      };
+      mountedCanvases.set(context.canvasElement, lifecycle);
+      queueMicrotask(mountWhenAttached);
       return host;
     },
   };
