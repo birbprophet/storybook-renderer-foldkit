@@ -37,9 +37,18 @@ const liveStory = () =>
     init: (args) => [args, []],
   });
 
+const renderThroughStorybookHtml = (storyFn: () => HTMLElement, canvasElement: HTMLElement) => {
+  const element = storyFn();
+  canvasElement.innerHTML = "";
+  canvasElement.appendChild(element);
+};
+
 const render = (story: ReturnType<typeof liveStory>, args: Args, id = "example--live") => {
   const canvasElement = document.createElement("div");
-  story.render(args, { canvasElement, id });
+  renderThroughStorybookHtml(
+    () => story.render(args, { canvasElement, id }),
+    canvasElement,
+  );
   return canvasElement;
 };
 
@@ -47,11 +56,14 @@ describe("live stories", () => {
   test("decode args and render the initial model", async () => {
     const story = liveStory();
     const canvasElement = document.createElement("div");
-    const returned = story.render(
-      { count: 7, label: "Count" },
-      { canvasElement, id: "example--live" },
+    renderThroughStorybookHtml(
+      () =>
+        story.render(
+          { count: 7, label: "Count" },
+          { canvasElement, id: "example--live" },
+        ),
+      canvasElement,
     );
-    expect(returned).toBe(canvasElement.firstElementChild);
     const canvas = canvasElement;
     await vi.waitFor(() => expect(canvas.textContent).toBe("Count: 7"));
   });
@@ -73,9 +85,13 @@ describe("live stories", () => {
       ],
     });
     const canvasElement = document.createElement("div");
-    story.render(
-      { count: 3, label: "Count" },
-      { canvasElement, id: "example--boot-command" },
+    renderThroughStorybookHtml(
+      () =>
+        story.render(
+          { count: 3, label: "Count" },
+          { canvasElement, id: "example--boot-command" },
+        ),
+      canvasElement,
     );
     await vi.waitFor(() => expect(canvasElement.textContent).toBe("Count: 4"));
   });
@@ -84,9 +100,13 @@ describe("live stories", () => {
     const story = liveStory();
     const canvas = render(story, { count: 1, label: "Before" });
     const firstHost = canvas.firstElementChild;
-    story.render(
-      { count: 9, label: "After" },
-      { canvasElement: canvas, id: "example--live" },
+    renderThroughStorybookHtml(
+      () =>
+        story.render(
+          { count: 9, label: "After" },
+          { canvasElement: canvas, id: "example--live" },
+        ),
+      canvas,
     );
     await vi.waitFor(() => expect(canvas.textContent).toBe("After: 9"));
     expect(firstHost?.isConnected).toBe(false);
@@ -113,6 +133,27 @@ describe("live stories", () => {
     expect(second.firstElementChild?.getAttribute("data-foldkit-story-id")).toBe(
       "example--second",
     );
+  });
+
+  test("waits for Storybook to attach the returned host before starting FoldKit", async () => {
+    const story = liveStory();
+    const canvasElement = document.createElement("div");
+    const host = story.render(
+      { count: 4, label: "Detached" },
+      { canvasElement, id: "example--detached" },
+    );
+    await Promise.resolve();
+    expect(host.textContent).toBe("");
+
+    renderThroughStorybookHtml(
+      () =>
+        story.render(
+          { count: 4, label: "Attached" },
+          { canvasElement, id: "example--detached" },
+        ),
+      canvasElement,
+    );
+    await vi.waitFor(() => expect(canvasElement.textContent).toBe("Attached: 4"));
   });
 });
 

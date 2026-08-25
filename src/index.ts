@@ -36,18 +36,26 @@ export function createFoldkitStory<Args, Model, Message, R = never>(
     render(args, context): HTMLElement {
       const decoded = Schema.decodeUnknownSync(definition.Args)(args);
       mountedCanvases.get(context.canvasElement)?.destroy();
-      context.canvasElement.replaceChildren();
+      mountedCanvases.delete(context.canvasElement);
 
-      const mounted = mountFoldkitStory({
-        container: context.canvasElement,
-        id: context.id,
-        initial: definition.init(decoded),
-        onCrash: definition.onCrash,
-        program: definition,
-        resources: definition.resources,
+      const host = context.canvasElement.ownerDocument.createElement("div");
+      host.dataset.foldkitStoryId = context.id;
+      queueMicrotask(() => {
+        if (host.parentElement !== context.canvasElement) {
+          return;
+        }
+        const mounted = mountFoldkitStory({
+          container: context.canvasElement,
+          host,
+          id: context.id,
+          initial: definition.init(decoded),
+          onCrash: definition.onCrash,
+          program: definition,
+          resources: definition.resources,
+        });
+        mountedCanvases.set(context.canvasElement, mounted);
       });
-      mountedCanvases.set(context.canvasElement, mounted);
-      return mounted.host;
+      return host;
     },
   };
 }

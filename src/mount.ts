@@ -19,6 +19,7 @@ export interface FoldkitProgram<Model, Message, R = never> {
 
 export interface MountOptions<Model, Message, R = never> {
   readonly container: HTMLElement;
+  readonly host?: HTMLDivElement;
   readonly id: string;
   readonly initial: InitialState<Model, Message, R>;
   readonly onCrash?: (error: unknown) => void;
@@ -37,12 +38,14 @@ export function mountFoldkitStory<Model, Message, R = never>(
   options: MountOptions<Model, Message, R>,
 ): MountedStory {
   const document = options.container.ownerDocument;
-  const host = document.createElement("div");
+  const host = options.host ?? document.createElement("div");
   host.dataset.foldkitStoryId = options.id;
   const seat = document.createElement("div");
   seat.id = `foldkit-story-${safeId(options.id)}`;
   host.appendChild(seat);
-  options.container.appendChild(host);
+  if (host.parentElement !== options.container) {
+    options.container.appendChild(host);
+  }
 
   const config: Record<string, unknown> = {
     Model: options.program.Model,
