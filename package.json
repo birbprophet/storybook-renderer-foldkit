@@ -1,6 +1,6 @@
 {
   "name": "storybook-renderer-foldkit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A live Storybook renderer for FoldKit views with typed Controls and deterministic cleanup.",
   "license": "MIT",
   "type": "module",
@@ -13,15 +13,22 @@
     "check": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "effect": "4.0.0-rc.111",
-    "foldkit": "0.149.0"
+    "effect": "4.0.0-rc.112",
+    "foldkit": "0.152.0"
   },
   "devDependencies": {
-    "@foldkit/vite-plugin": "0.17.0",
+    "@foldkit/vite-plugin": "0.18.0",
     "@happy-dom/global-registrator": "20.11.6",
     "@storybook/html": "10.5.10",
     "happy-dom": "20.10.4",
     "typescript": "7.0.2",
     "vitest": "4.1.9"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "bun",
+      "version": "1.4.0",
+      "onFail": "download"
+    }
   }
 }

@@ -5,11 +5,11 @@
     "": {
       "name": "storybook-renderer-foldkit",
       "dependencies": {
-        "effect": "4.0.0-rc.111",
-        "foldkit": "0.149.0",
+        "effect": "4.0.0-rc.112",
+        "foldkit": "0.152.0",
       },
       "devDependencies": {
-        "@foldkit/vite-plugin": "0.17.0",
+        "@foldkit/vite-plugin": "0.18.0",
         "@happy-dom/global-registrator": "20.11.6",
         "@storybook/html": "10.5.10",
         "happy-dom": "20.10.4",
@@ -85,7 +85,7 @@
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.28.2", "", { "os": "win32", "cpu": "x64" }, "sha512-5ebpxr3nWMzrL/rnUI755Jkuee0bHL/Gq0WTF9lvcpv73wAp5eu8MfBUgWK9bhWvZjj7yX8etf/8tI8Ney695g=="],
 
-    "@foldkit/vite-plugin": ["@foldkit/vite-plugin@0.17.0", "", { "dependencies": { "magic-string": "^0.30.21", "ws": "^8.21.0" }, "peerDependencies": { "effect": "4.0.0-rc.111", "foldkit": ">=0.148.0", "vite": "^7.0.0 || ^8.0.0" } }, "sha512-C7OjQg0AG7D1jTisaX1V1CLzJAftup/aDGWsR3gqDik8bDSGgjIrFnupLxd3IJF7x/j1LVf6FDniHPIFizNIwQ=="],
+    "@foldkit/vite-plugin": ["@foldkit/vite-plugin@0.18.0", "", { "dependencies": { "magic-string": "^0.30.21", "ws": "^8.21.0" }, "peerDependencies": { "effect": "4.0.0-rc.112", "foldkit": ">=0.148.0", "vite": "^7.0.0 || ^8.0.0" } }, "sha512-uRoReIUFXUQn9NRSvetFTB9pXU6IEOvCIcXparq7DwUDzM0g9Sx1VbNL/70S8idKvxKLAbx9GJmePzKOXgk8dQ=="],
 
     "@happy-dom/global-registrator": ["@happy-dom/global-registrator@20.11.6", "", { "dependencies": { "@types/node": ">=20.0.0", "happy-dom": "^20.11.6" } }, "sha512-ZQ47qUTeNbGhHkCGExJ1oZhruoxKRaxO44RgFETl3T4c1rRxIBlAOnM3SAH4XHu7Ue2owJXP+jOx1vOuKuxcSg=="],
 
@@ -339,7 +339,7 @@
 
     "dom-accessibility-api": ["dom-accessibility-api@0.5.16", "", {}, "sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg=="],
 
-    "effect": ["effect@4.0.0-rc.111", "", { "dependencies": { "@standard-schema/spec": "^1.1.0", "fast-check": "^4.9.0", "msgpackr": "^2.0.5" } }, "sha512-ASd5L58EIR0CUNueZNKKjSsyOCd+2alxOAIaTcHaqkJkPsaYSsw5Cg/cfANk5K4Jr2YsX756xvX11shzqsreWA=="],
+    "effect": ["effect@4.0.0-rc.112", "", { "dependencies": { "fast-check": "^4.9.0", "msgpackr": "^2.0.5" } }, "sha512-wXxwuh1Ywnv4cPRM3Wfa0vDwuOHnZ1TsTgHJkG9XgzND6inhBH9n1vBxhg3iIXOia/OrpmvVmd3lrD4vq6bF3A=="],
 
     "entities": ["entities@7.0.1", "", {}, "sha512-TWrgLOFUQTH994YUyl1yT4uyavY5nNB5muff+RtWaqNVCAK408b5ZnnbNAUEWLTCpum9w6arT70i1XdQ4UeOPA=="],
 
@@ -357,7 +357,7 @@
 
     "fdir": ["fdir@6.5.0", "", { "peerDependencies": { "picomatch": "^3 || ^4" }, "optionalPeers": ["picomatch"] }, "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg=="],
 
-    "foldkit": ["foldkit@0.149.0", "", { "dependencies": { "parse5": "^8.0.1" }, "peerDependencies": { "effect": "4.0.0-rc.109" } }, "sha512-Jih8kurzLdGDxqEVs8c2vP+FWYMiuFnPfOCGSPojRCrTaOMOKG+fZ83buNmSM2dgi7PuKBsriyc2lMpaZ+rcXQ=="],
+    "foldkit": ["foldkit@0.152.0", "", { "dependencies": { "parse5": "^8.0.1" }, "peerDependencies": { "effect": "4.0.0-rc.112" } }, "sha512-LX4YMT55ymoX2jE+OqZ8Xq2Mm5M/IO4mKXJMbtazNM/HEmkGTc08+0YXmKNmX5KqqRyZgnVYsqBQHocXMQethQ=="],
 
     "fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
 

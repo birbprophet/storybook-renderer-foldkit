@@ -2,6 +2,7 @@ import type { Layer, Schema } from "effect";
 import { Runtime } from "foldkit";
 import type { Command } from "foldkit/command";
 import type { HtmlBuilder } from "foldkit/html";
+import type { Subscriptions } from "foldkit/subscription";
 
 export type InitialState<Model, Message, R> = readonly [
   Model,
@@ -15,6 +16,7 @@ export interface FoldkitProgram<Model, Message, R = never> {
     message: Message,
   ) => readonly [Model, ReadonlyArray<Command<Message, never, R>>];
   readonly view: (model: Model, h: HtmlBuilder<Message>) => { body: unknown };
+  readonly subscriptions?: Subscriptions<Model, Message, R>;
 }
 
 export interface MountOptions<Model, Message, R = never> {
@@ -78,11 +80,14 @@ export function mountFoldkitStory<Model, Message, R = never>(
 
   const config: Record<string, unknown> = {
     Model: options.program.Model,
-    init: () => options.initial,
-    update: options.program.update,
-    view: (model: Model, h: unknown) =>
-      options.program.view(model, h as HtmlBuilder<Message>).body,
+    init: () => ({ commands: options.initial[1], model: options.initial[0] }),
+    update: (model: Model, message: Message) => {
+      const [nextModel, commands] = options.program.update(model, message);
+      return { commands, model: nextModel };
+    },
+    view: (model: Model, h: unknown) => options.program.view(model, h as HtmlBuilder<Message>).body,
     ...(options.resources ? { resources: options.resources } : {}),
+    ...(options.program.subscriptions ? { subscriptions: options.program.subscriptions } : {}),
     crash: {
       report: (context: { error: unknown }) => reportCrash(context.error),
     },

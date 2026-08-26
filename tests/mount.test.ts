@@ -46,10 +46,7 @@ const renderThroughStorybookHtml = (storyFn: () => HTMLElement, canvasElement: H
 
 const render = (story: ReturnType<typeof liveStory>, args: Args, id = "example--live") => {
   const canvasElement = document.createElement("div");
-  renderThroughStorybookHtml(
-    () => story.render(args, { canvasElement, id }),
-    canvasElement,
-  );
+  renderThroughStorybookHtml(() => story.render(args, { canvasElement, id }), canvasElement);
   return canvasElement;
 };
 
@@ -58,11 +55,7 @@ describe("live stories", () => {
     const story = liveStory();
     const canvasElement = document.createElement("div");
     renderThroughStorybookHtml(
-      () =>
-        story.render(
-          { count: 7, label: "Count" },
-          { canvasElement, id: "example--live" },
-        ),
+      () => story.render({ count: 7, label: "Count" }, { canvasElement, id: "example--live" }),
       canvasElement,
     );
     const canvas = canvasElement;
@@ -80,18 +73,12 @@ describe("live stories", () => {
     const story = createFoldkitStory<Args, Model, Message>({
       ...programImpl,
       Args,
-      init: (args) => [
-        args,
-        [{ name: "IncrementOnBoot", effect: Effect.succeed(Increment()) }],
-      ],
+      init: (args) => [args, [{ name: "IncrementOnBoot", effect: Effect.succeed(Increment()) }]],
     });
     const canvasElement = document.createElement("div");
     renderThroughStorybookHtml(
       () =>
-        story.render(
-          { count: 3, label: "Count" },
-          { canvasElement, id: "example--boot-command" },
-        ),
+        story.render({ count: 3, label: "Count" }, { canvasElement, id: "example--boot-command" }),
       canvasElement,
     );
     await vi.waitFor(() => expect(canvasElement.textContent).toBe("Count: 4"));
@@ -103,10 +90,7 @@ describe("live stories", () => {
     const firstHost = canvas.firstElementChild;
     renderThroughStorybookHtml(
       () =>
-        story.render(
-          { count: 9, label: "After" },
-          { canvasElement: canvas, id: "example--live" },
-        ),
+        story.render({ count: 9, label: "After" }, { canvasElement: canvas, id: "example--live" }),
       canvas,
     );
     await waitForFoldkitStory(canvas);
@@ -118,10 +102,10 @@ describe("live stories", () => {
   test("reject invalid Controls args before mounting", () => {
     const canvasElement = document.createElement("div");
     expect(() =>
-      liveStory().render(
-        { count: "not-a-number", label: "Count" } as never,
-        { canvasElement, id: "example--live" },
-      ),
+      liveStory().render({ count: "not-a-number", label: "Count" } as never, {
+        canvasElement,
+        id: "example--live",
+      }),
     ).toThrow();
     expect(canvasElement.children).toHaveLength(0);
   });
@@ -130,12 +114,8 @@ describe("live stories", () => {
     const first = render(liveStory(), { count: 1, label: "First" }, "example--first");
     const second = render(liveStory(), { count: 2, label: "Second" }, "example--second");
     await Promise.all([waitForFoldkitStory(first), waitForFoldkitStory(second)]);
-    expect(first.firstElementChild?.getAttribute("data-foldkit-story-id")).toBe(
-      "example--first",
-    );
-    expect(second.firstElementChild?.getAttribute("data-foldkit-story-id")).toBe(
-      "example--second",
-    );
+    expect(first.firstElementChild?.getAttribute("data-foldkit-story-id")).toBe("example--first");
+    expect(second.firstElementChild?.getAttribute("data-foldkit-story-id")).toBe("example--second");
   });
 
   test("mounts the original returned host when Storybook attaches it after the first microtask", async () => {
@@ -271,12 +251,12 @@ describe("compatibility pins", () => {
     const root = process.cwd();
     const manifest = JSON.parse(readFileSync(`${root}/package.json`, "utf8"));
     expect(manifest).toMatchObject({
-      dependencies: { effect: "4.0.0-rc.111", foldkit: "0.149.0" },
+      dependencies: { effect: "4.0.0-rc.112", foldkit: "0.152.0" },
       devDependencies: {
-        "@foldkit/vite-plugin": "0.17.0",
+        "@foldkit/vite-plugin": "0.18.0",
         "@storybook/html": "10.5.10",
       },
-      version: "0.2.0",
+      version: "0.3.0",
     });
   });
 
@@ -284,7 +264,7 @@ describe("compatibility pins", () => {
     const root = process.cwd();
     const found = execFileSync(
       "git",
-      ["grep", "-l", "--fixed-strings", "from \"foldkit\"", "--", "src/*.ts"],
+      ["grep", "-l", "--fixed-strings", 'from "foldkit"', "--", "src/*.ts"],
       { cwd: root, encoding: "utf8" },
     )
       .trim()

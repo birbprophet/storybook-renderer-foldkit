@@ -10,9 +10,9 @@ which fills the same gap for Astro's server surface.
 ## Targets
 
 - Storybook `10.5.10`
-- FoldKit `0.149.0`
-- Effect `4.0.0-rc.111`
-- `@foldkit/vite-plugin` `0.17.0`
+- FoldKit `0.152.0`
+- Effect `4.0.0-rc.112`
+- `@foldkit/vite-plugin` `0.18.0`
 
 The versions are exact pins. The compatibility boundary is one file
 (`src/mount.ts`): it is the only code that touches both Storybook's canvas

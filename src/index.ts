@@ -19,8 +19,11 @@ export interface FoldkitStory<Args> {
   render(args: Args, context: StoryContext): HTMLElement;
 }
 
-export interface FoldkitStoryDefinition<Args, Model, Message, R = never>
-  extends FoldkitProgram<Model, Message, R> {
+export interface FoldkitStoryDefinition<Args, Model, Message, R = never> extends FoldkitProgram<
+  Model,
+  Message,
+  R
+> {
   readonly Args: Schema.Codec<Args, unknown, never>;
   readonly init: (args: Args) => InitialState<Model, Message, R>;
   readonly resources?: Layer.Layer<R, never>;
@@ -52,7 +55,9 @@ export function waitForFoldkitStory(
     };
     const onAbort = () => {
       cleanup();
-      reject(options.signal?.reason ?? new DOMException("FoldKit story wait aborted", "AbortError"));
+      reject(
+        options.signal?.reason ?? new DOMException("FoldKit story wait aborted", "AbortError"),
+      );
     };
     const inspect = () => {
       const host = canvasElement.matches("[data-foldkit-story-id]")
@@ -160,9 +165,4 @@ export function foldkitStories<Model, Message, R = never>(
 }
 
 export { mountFoldkitStory } from "./mount.ts";
-export type {
-  FoldkitProgram,
-  InitialState,
-  MountOptions,
-  MountedStory,
-} from "./mount.ts";
+export type { FoldkitProgram, InitialState, MountOptions, MountedStory } from "./mount.ts";
