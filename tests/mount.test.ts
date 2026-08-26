@@ -155,6 +155,47 @@ describe("live stories", () => {
     expect(canvasElement.textContent).toBe("Detached: 4");
   });
 
+  test("readiness resolves only after the first FoldKit DOM commit from one render", async () => {
+    const story = liveStory();
+    const canvasElement = document.createElement("div");
+    const host = story.render(
+      { count: 4, label: "Cold iframe" },
+      { canvasElement, id: "example--cold-iframe" },
+    );
+    const ready = waitForFoldkitStory(canvasElement);
+    expect(host.dataset.foldkitState).toBe("mounting");
+    expect(host.childNodes).toHaveLength(0);
+
+    canvasElement.appendChild(host);
+
+    await expect(ready).resolves.toBe(host);
+    expect(host.dataset.foldkitState).toBe("ready");
+    expect(host.textContent).toBe("Cold iframe: 4");
+  });
+
+  test("waits in the direct iframe realm for the original host's first commit", async () => {
+    const iframe = document.createElement("iframe");
+    document.body.appendChild(iframe);
+    const iframeDocument = iframe.contentDocument;
+    expect(iframeDocument).not.toBeNull();
+    if (iframeDocument === null) throw new Error("iframe document unavailable");
+    const canvasElement = iframeDocument.createElement("div");
+    iframeDocument.body.appendChild(canvasElement);
+    const story = liveStory();
+    const host = story.render(
+      { count: 8, label: "Direct iframe" },
+      { canvasElement, id: "example--direct-iframe" },
+    );
+    const ready = waitForFoldkitStory(canvasElement);
+
+    canvasElement.appendChild(host);
+
+    await expect(ready).resolves.toBe(host);
+    expect(host.ownerDocument).toBe(iframeDocument);
+    expect(host.textContent).toBe("Direct iframe: 8");
+    iframe.remove();
+  });
+
   test("destroy a pending attachment when Controls replace its story", async () => {
     const story = liveStory();
     const canvasElement = document.createElement("div");
@@ -177,6 +218,30 @@ describe("live stories", () => {
     expect(canvasElement.textContent).toBe("Replacement: 2");
   });
 
+  test("dispose the mounted runtime before a Controls remount", async () => {
+    const story = liveStory();
+    const canvasElement = document.createElement("div");
+    const firstHost = story.render(
+      { count: 1, label: "Before" },
+      { canvasElement, id: "example--controls-cleanup" },
+    );
+    canvasElement.appendChild(firstHost);
+    await waitForFoldkitStory(canvasElement);
+    const staleButton = firstHost.querySelector("button");
+
+    const replacement = story.render(
+      { count: 9, label: "After" },
+      { canvasElement, id: "example--controls-cleanup" },
+    );
+    canvasElement.replaceChildren(replacement);
+    await waitForFoldkitStory(canvasElement);
+    staleButton?.click();
+
+    await Promise.resolve();
+    expect(firstHost.isConnected).toBe(false);
+    expect(canvasElement.textContent).toBe("After: 9");
+  });
+
   test("reject readiness when the first FoldKit view crashes", async () => {
     const crashingStory = createFoldkitStory<Args, Model, Message>({
       ...programImpl,
@@ -197,6 +262,7 @@ describe("live stories", () => {
     await expect(waitForFoldkitStory(canvasElement)).rejects.toThrow(
       "FoldKit story example--crash-ready crashed",
     );
+    expect(host.dataset.foldkitState).toBe("crashed");
   });
 });
 

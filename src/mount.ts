@@ -34,6 +34,9 @@ export interface MountedStory {
 
 const safeId = (id: string): string => id.replaceAll(/[^a-zA-Z0-9_-]/gu, "-");
 
+const observerFor = (document: Document): typeof MutationObserver =>
+  document.defaultView?.MutationObserver ?? MutationObserver;
+
 export function mountFoldkitStory<Model, Message, R = never>(
   options: MountOptions<Model, Message, R>,
 ): MountedStory {
@@ -41,6 +44,7 @@ export function mountFoldkitStory<Model, Message, R = never>(
   const host = options.host ?? document.createElement("div");
   host.dataset.foldkitStoryId = options.id;
   const seat = document.createElement("div");
+  seat.dataset.foldkitStorySeat = "";
   seat.id = `foldkit-story-${safeId(options.id)}`;
   host.appendChild(seat);
   host.dataset.foldkitState = "mounting";
@@ -48,17 +52,29 @@ export function mountFoldkitStory<Model, Message, R = never>(
     options.container.appendChild(host);
   }
 
-  const readinessObserver = new MutationObserver(() => {
-    if (host.dataset.foldkitState === "mounting") {
+  const markReady = () => {
+    const runtimeReplacedSeat = seat.parentElement !== host && host.childNodes.length > 0;
+    const runtimeFilledSeat = seat.parentElement === host && seat.childNodes.length > 0;
+    if (host.dataset.foldkitState === "mounting" && (runtimeReplacedSeat || runtimeFilledSeat)) {
       host.dataset.foldkitState = "ready";
       readinessObserver.disconnect();
     }
-  });
+  };
+  const ReadinessObserver = observerFor(document);
+  const readinessObserver = new ReadinessObserver(markReady);
   readinessObserver.observe(host, {
     characterData: true,
     childList: true,
     subtree: true,
   });
+
+  const reportCrash = (error: unknown) => {
+    if (host.dataset.foldkitState === "crashed") return;
+    host.dataset.foldkitState = "crashed";
+    readinessObserver.disconnect();
+    if (options.onCrash) options.onCrash(error);
+    else console.error("[storybook-renderer-foldkit] crash:", error);
+  };
 
   const config: Record<string, unknown> = {
     Model: options.program.Model,
@@ -68,26 +84,18 @@ export function mountFoldkitStory<Model, Message, R = never>(
       options.program.view(model, h as HtmlBuilder<Message>).body,
     ...(options.resources ? { resources: options.resources } : {}),
     crash: {
-      report: (context: { error: unknown }) => {
-        host.dataset.foldkitState = "crashed";
-        readinessObserver.disconnect();
-        if (options.onCrash) options.onCrash(context.error);
-        else console.error("[storybook-renderer-foldkit] crash:", context.error);
-      },
+      report: (context: { error: unknown }) => reportCrash(context.error),
     },
     container: seat,
   };
 
-  const handle = Runtime.embed(Runtime.makeElement(config as never) as never);
-  queueMicrotask(() => {
-    if (
-      host.dataset.foldkitState === "mounting" &&
-      (seat.childNodes.length > 0 || !seat.isConnected)
-    ) {
-      host.dataset.foldkitState = "ready";
-      readinessObserver.disconnect();
-    }
-  });
+  let handle: ReturnType<typeof Runtime.embed> | undefined;
+  try {
+    handle = Runtime.embed(Runtime.makeElement(config as never) as never);
+  } catch (error) {
+    reportCrash(error);
+  }
+  queueMicrotask(markReady);
 
   let destroyed = false;
   return {
@@ -96,7 +104,7 @@ export function mountFoldkitStory<Model, Message, R = never>(
       if (destroyed) return;
       destroyed = true;
       readinessObserver.disconnect();
-      handle.dispose();
+      handle?.dispose();
       host.remove();
     },
   };

@@ -33,6 +33,9 @@ interface StoryLifecycle {
 
 const mountedCanvases = new WeakMap<HTMLElement, StoryLifecycle>();
 
+const observerFor = (element: HTMLElement): typeof MutationObserver =>
+  element.ownerDocument.defaultView?.MutationObserver ?? MutationObserver;
+
 export interface WaitForFoldkitStoryOptions {
   readonly signal?: AbortSignal;
 }
@@ -52,8 +55,10 @@ export function waitForFoldkitStory(
       reject(options.signal?.reason ?? new DOMException("FoldKit story wait aborted", "AbortError"));
     };
     const inspect = () => {
-      const host = canvasElement.querySelector<HTMLElement>("[data-foldkit-story-id]");
-      if (host?.dataset.foldkitState === "ready") {
+      const host = canvasElement.matches("[data-foldkit-story-id]")
+        ? canvasElement
+        : canvasElement.querySelector<HTMLElement>("[data-foldkit-story-id]");
+      if (host?.dataset.foldkitState === "ready" && host.childNodes.length > 0) {
         cleanup();
         resolve(host);
       } else if (host?.dataset.foldkitState === "crashed") {
@@ -66,7 +71,8 @@ export function waitForFoldkitStory(
       onAbort();
       return;
     }
-    observer = new MutationObserver(inspect);
+    const CanvasObserver = observerFor(canvasElement);
+    observer = new CanvasObserver(inspect);
     observer.observe(canvasElement, {
       attributes: true,
       childList: true,
@@ -106,7 +112,8 @@ export function createFoldkitStory<Args, Model, Message, R = never>(
           resources: definition.resources,
         });
       };
-      const attachmentObserver = new MutationObserver(mountWhenAttached);
+      const AttachmentObserver = observerFor(context.canvasElement);
+      const attachmentObserver = new AttachmentObserver(mountWhenAttached);
       attachmentObserver.observe(context.canvasElement, { childList: true });
       const lifecycle: StoryLifecycle = {
         destroy() {
