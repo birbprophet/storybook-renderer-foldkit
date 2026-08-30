@@ -1,9 +1,8 @@
 # storybook-renderer-foldkit
 
-A [Storybook](https://storybook.js.org) renderer for [Foldkit](https://github.com/foldkit/foldkit)
-views. It mounts the real Foldkit Runtime element per story — the shipped
-boundary, not a serialization of it — and turns named fixture Models into
-static CSF stories.
+A [Storybook](https://storybook.js.org) renderer for [FoldKit](https://github.com/foldkit/foldkit)
+views. It mounts the real FoldKit Runtime element per story, decodes Controls
+through Effect Schema, and gives Storybook a host-controlled runtime lifecycle.
 
 Sibling to [astro-renderer-foldkit](https://github.com/birbprophet/astro-renderer-foldkit),
 which fills the same gap for Astro's server surface.
@@ -11,8 +10,9 @@ which fills the same gap for Astro's server surface.
 ## Targets
 
 - Storybook `10.5.10`
-- FoldKit `0.148.2`
-- Effect `4.0.0-rc.110`
+- FoldKit `0.152.0`
+- Effect `4.0.0-rc.112`
+- `@foldkit/vite-plugin` `0.18.0`
 
 The versions are exact pins. The compatibility boundary is one file
 (`src/mount.ts`): it is the only code that touches both Storybook's canvas
@@ -30,27 +30,64 @@ npm install github:birbprophet/storybook-renderer-foldkit#<commit>
 
 When upgrading, choose and review a new commit explicitly.
 
-## Use
+## Live stories
 
-In `preview.ts`, nothing special is required — stories carry their own
-`render`. In a stories file:
+Add `foldkit()` to Storybook's Vite configuration, then create a live story:
 
 ```ts
-// Counter.stories.ts
-import { foldkitStories } from "storybook-renderer-foldkit";
+import * as S from "effect/Schema";
+import { createFoldkitStory } from "storybook-renderer-foldkit";
 
-import * as program from "../src/main.ts"; // Model, update, view
-import { live, loading } from "../src/stories.ts"; // named fixture Models
+export const Live = {
+  ...createFoldkitStory({
+    Args: S.Struct({ count: S.Number }),
+    Model,
+    init: (args) => [args, []],
+    update,
+    view,
+    // resources: ApiClientFixtureLive,
+  }),
+  args: { count: 0 },
+};
+```
 
-const stories = foldkitStories({
-  title: "Trade/Chain",
-  program,
-  // resources: ApiClientFixtureLive, // optional Layer
-});
+Controls changes decode through `Args` and remount with the new initial model.
+Each canvas uses the Storybook context ID for its mount seat. A remount or story
+change disposes the previous FoldKit runtime before replacing it. The existing
+`foldkitStories` named-fixture API remains as a compatibility wrapper.
+
+FoldKit commits its first view asynchronously. Interaction stories must wait
+for that commit before querying the canvas:
+
+```ts
+import { waitForFoldkitStory } from "storybook-renderer-foldkit";
+
+export const Interactions = {
+  ...Live,
+  play: async ({ canvasElement }) => {
+    await waitForFoldkitStory(canvasElement);
+    // Query and operate the mounted FoldKit view here.
+  },
+};
+```
+
+The wait rejects when the runtime crashes and accepts an optional `AbortSignal`.
+Controls changes also destroy an unmounted pending host, so a late attachment
+cannot start a stale runtime.
+
+In Storybook's `viteFinal`:
+
+```ts
+import { foldkit } from "@foldkit/vite-plugin";
+
+viteConfig.plugins?.push(foldkit());
+return viteConfig;
+```
+
 ## Known limitations
 
 - **Vitest browser mode is not used for this package's own tests.** As of
-  `0.1.0`, `Runtime.makeElement` boots but patches nothing under
+  `0.2.0`, `Runtime.makeElement` boots but patches nothing under
   Vitest browser mode + Chromium — the differ crashes with
   `Cannot read properties of undefined (reading 'elm')` inside
   `dedupeSharedVNodes`, even for a raw text-only view, with and without
