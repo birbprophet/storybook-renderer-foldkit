@@ -14,10 +14,10 @@
   },
   "dependencies": {
     "effect": "4.0.0-rc.112",
-    "foldkit": "0.156.0"
+    "foldkit": "0.157.0"
   },
   "devDependencies": {
-    "@foldkit/vite-plugin": "0.20.0",
+    "@foldkit/vite-plugin": "0.20.1",
     "@happy-dom/global-registrator": "20.11.6",
     "@storybook/html": "10.5.10",
     "happy-dom": "20.10.4",
