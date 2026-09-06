@@ -166,3 +166,5 @@ export function foldkitStories<Model, Message, R = never>(
 
 export { mountFoldkitStory } from "./mount.ts";
 export type { FoldkitProgram, InitialState, MountOptions, MountedStory } from "./mount.ts";
+
+export { toHtml } from "./to-html.ts";
