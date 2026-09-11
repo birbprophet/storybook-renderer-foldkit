@@ -156,6 +156,23 @@ export function liveStory<Args, Model, Message>(
   });
 }
 
+export interface StaticStoryDefinition<Args, Message> {
+  readonly Args: Schema.Codec<Args, unknown>;
+  readonly view: (model: Args, h: HtmlBuilder<Message>) => Html;
+}
+
+export function staticStory<Args, Message = never>(
+  definition: StaticStoryDefinition<Args, Message>,
+): FoldkitStory<Args> {
+  return liveStory<Args, Args, Message>({
+    Args: definition.Args,
+    Model: definition.Args,
+    init: (args) => args,
+    update: (model) => model,
+    view: definition.view,
+  });
+}
+
 export interface FoldkitMeta<Model, Message, R = never> {
   readonly title: string;
   readonly program: FoldkitProgram<Model, Message, R>;

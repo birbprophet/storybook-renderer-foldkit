@@ -84,6 +84,44 @@ viteConfig.plugins?.push(foldkit());
 return viteConfig;
 ```
 
+### Simpler adapters
+
+`liveStory` drops the Command tuples for programs that never issue commands —
+`init` and `update` return the bare `Model`, and `view` returns `Html`:
+
+```ts
+import { liveStory } from "storybook-renderer-foldkit";
+
+export const Counter = {
+  ...liveStory({
+    Args: S.Struct({ count: S.Number }),
+    Model,
+    init: (args) => args,
+    update,
+    view,
+  }),
+  args: { count: 0 },
+};
+```
+
+`staticStory` drops the program entirely for args-only stories — no `Model`,
+`init`, `update`, or `Message`. The args are the model:
+
+```ts
+import { staticStory } from "storybook-renderer-foldkit";
+
+export const Badge = {
+  ...staticStory({
+    Args: S.Struct({ label: S.String }),
+    view,
+  }),
+  args: { label: "New" },
+};
+```
+
+Views that emit ignorable messages (a button with `OnClick`) still typecheck:
+pass the message type explicitly, e.g. `staticStory<Args, Message>({ … })`.
+
 ## Known limitations
 
 - **Vitest browser mode is not used for this package's own tests.** As of
