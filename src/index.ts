@@ -1,5 +1,6 @@
 import type { Layer } from "effect";
 import * as Schema from "effect/Schema";
+import type { Html, HtmlBuilder } from "foldkit/html";
 
 import {
   mountFoldkitStory,
@@ -134,6 +135,25 @@ export function createFoldkitStory<Args, Model, Message, R = never>(
       return host;
     },
   };
+}
+export interface LiveStoryDefinition<Args, Model, Message> {
+  readonly Args: Schema.Codec<Args, unknown>;
+  readonly Model: Schema.Codec<Model, unknown>;
+  readonly init: (args: Args) => Model;
+  readonly update: (model: Model, message: Message) => Model;
+  readonly view: (model: Model, h: HtmlBuilder<Message>) => Html;
+}
+
+export function liveStory<Args, Model, Message>(
+  definition: LiveStoryDefinition<Args, Model, Message>,
+): FoldkitStory<Args> {
+  return createFoldkitStory<Args, Model, Message>({
+    Args: definition.Args,
+    Model: definition.Model,
+    init: (args) => [definition.init(args), []],
+    update: (model, message) => [definition.update(model, message), []],
+    view: (model, h) => ({ body: definition.view(model, h) }),
+  });
 }
 
 export interface FoldkitMeta<Model, Message, R = never> {
