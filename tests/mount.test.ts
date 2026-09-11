@@ -251,7 +251,7 @@ describe("compatibility pins", () => {
     const root = process.cwd();
     const manifest = JSON.parse(readFileSync(`${root}/package.json`, "utf8"));
     expect(manifest).toMatchObject({
-      dependencies: { effect: "4.0.0-rc.112", foldkit: "0.157.0" },
+      dependencies: { effect: "4.0.0-rc.112", foldkit: "0.158.2" },
       devDependencies: {
         "@foldkit/vite-plugin": "0.20.1",
         "@storybook/html": "10.5.10",

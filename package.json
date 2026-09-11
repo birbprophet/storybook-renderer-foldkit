@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "effect": "4.0.0-rc.112",
-    "foldkit": "0.157.0"
+    "foldkit": "0.158.2"
   },
   "devDependencies": {
     "@foldkit/vite-plugin": "0.20.1",

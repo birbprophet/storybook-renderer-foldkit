@@ -6,7 +6,7 @@
       "name": "storybook-renderer-foldkit",
       "dependencies": {
         "effect": "4.0.0-rc.112",
-        "foldkit": "0.157.0",
+        "foldkit": "0.158.2",
       },
       "devDependencies": {
         "@foldkit/vite-plugin": "0.20.1",
@@ -357,7 +357,7 @@
 
     "fdir": ["fdir@6.5.0", "", { "peerDependencies": { "picomatch": "^3 || ^4" }, "optionalPeers": ["picomatch"] }, "sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg=="],
 
-    "foldkit": ["foldkit@0.157.0", "", { "dependencies": { "parse5": "^8.0.1" }, "peerDependencies": { "effect": "4.0.0-rc.112" } }, "sha512-I2ImNQqrM+ZRLm+S8xy0gm9G0BBmJYOq+6l4UcvrjBdRLuUrFyClKXsvycCFHlwqhbbz4tKrUhONyslACJqauw=="],
+    "foldkit": ["foldkit@0.158.2", "", { "dependencies": { "parse5": "^8.0.1" }, "peerDependencies": { "effect": "4.0.0-rc.112" } }, "sha512-zA2Bj0W6DHPhPYXGtWduMJjuKnAo+uDyVNLSp5SO3panujtW5Tbh3oLqXhaOcvomqMx6DO2SUtTy+R5s0ut3wQ=="],
 
     "fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
 
