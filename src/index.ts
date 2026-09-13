@@ -113,9 +113,9 @@ export function createFoldkitStory<Args, Model, Message, R = never>(
           host,
           id: context.id,
           initial: definition.init(decoded),
-          onCrash: definition.onCrash,
+          ...(definition.onCrash === undefined ? {} : { onCrash: definition.onCrash }),
           program: definition,
-          resources: definition.resources,
+          ...(definition.resources === undefined ? {} : { resources: definition.resources }),
         });
       };
       const AttachmentObserver = observerFor(context.canvasElement);
@@ -194,7 +194,7 @@ export function foldkitStories<Model, Message, R = never>(
         ...meta.program,
         Args: NoArgs,
         init: () => [model, []],
-        resources: meta.resources,
+        ...(meta.resources === undefined ? {} : { resources: meta.resources }),
       }),
       name,
     }),
